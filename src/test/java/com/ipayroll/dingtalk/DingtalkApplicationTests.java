@@ -20,10 +20,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class DingtalkApplicationTests {
+
+    private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
     @Resource
     private AnnualLeaveController indexController;
@@ -40,7 +46,7 @@ public class DingtalkApplicationTests {
     }
 
     @Test
-    public void synDataJob(){
+    public void synDataJob() throws ParseException {
         annalLeaveJob.synDataJob();
     }
 
@@ -59,5 +65,15 @@ public class DingtalkApplicationTests {
         AnnualLeaveMessage annualLeaveMessageCommitter = annualLeaveMessageRepository.findByCheckMessage(CheckMessage.COMMITTER_ANNUAL);
         String url = "https://aflow.dingtalk.com/dingtalk/mobile/homepage.htm?corpid=ding9756ae917ae4830f35c2f4657eb6378f&dd_share=false&showmenu=true&dd_progress=false&back=native&procInstId=96caa30a-49bf-4ae4-81ae-bd93969b5d96&taskId=&swfrom=isv&dinghash=approval&dd_from=#approval";
         annualLeaveServiceimpl.sendMessage("144162032021168262",annualLeaveMessageCommitter.getContent(),url);
+    }
+
+    @Test
+    public void tets(){
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.set(Calendar.MONTH, 0);
+        calendar.set(Calendar.DATE, 1);
+        Date thisYear = calendar.getTime();
+        System.out.println(sdf.format(thisYear));
     }
 }

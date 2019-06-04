@@ -13,10 +13,12 @@ import com.ipayroll.dingtalk.config.AgentConfig;
 import com.ipayroll.dingtalk.config.CallbackConfig;
 import com.ipayroll.dingtalk.data.entity.ResponseCode;
 import com.ipayroll.dingtalk.entity.annual.AnnualLeave;
+import com.ipayroll.dingtalk.entity.annual.AnnualLeaveFlow;
 import com.ipayroll.dingtalk.entity.annual.AnnualLeaveMessage;
 import com.ipayroll.dingtalk.enums.CheckMessage;
 import com.ipayroll.dingtalk.enums.SuitePushType;
 import com.ipayroll.dingtalk.exception.ServiceException;
+import com.ipayroll.dingtalk.repository.AnnualLeaveFlowRepository;
 import com.ipayroll.dingtalk.repository.AnnualLeaveMessageRepository;
 import com.ipayroll.dingtalk.repository.AnnualLeaveRepository;
 import com.ipayroll.dingtalk.service.annual.AnnualLeaveService;
@@ -54,6 +56,8 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
     private AnnualLeaveRepository annualLeaveRepository;
     @Resource
     private AnnualLeaveMessageRepository annualLeaveMessageRepository;
+    @Resource
+    private AnnualLeaveFlowRepository annualLeaveFlowRepository;
 
     @Override
     public OapiUserGetuserinfoResponse getUserInfo(String requestAuthCode,String accessToken) {
@@ -323,10 +327,25 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         Float durationInDay = (Float) mapResult.get("durationInDay");
         String checkIds = (String)mapResult.get("checkId");
         String biz_action = (String)mapResult.get("biz_action");
-        AnnualLeave annualLeave = annualLeaveRepository.findByUserId(staffId);
 
-        //剩余年假天数
-        float days = annualLeave.getTotalDays() - annualLeave.getPassDays() > 0f ? annualLeave.getTotalDays() - annualLeave.getPassDays() : 0f;
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.set(Calendar.MONTH, 0);
+        calendar.set(Calendar.DATE, 1);
+        Date thisYear = calendar.getTime();
+        AnnualLeaveFlow annualLeaveFlowThisYear = annualLeaveFlowRepository.findByUserIdAndYear(staffId,thisYear);
+        //今年剩余年假
+        float daysThisYear = annualLeaveFlowThisYear.getTotalDays() - annualLeaveFlowThisYear.getPassDays() > 0f ? annualLeaveFlowThisYear.getTotalDays() - annualLeaveFlowThisYear.getPassDays() : 0f;
+
+        calendar.add(Calendar.YEAR,-1);
+        Date lastYear = calendar.getTime();
+        AnnualLeaveFlow annualLeaveFlowLastYear = annualLeaveFlowRepository.findByUserIdAndYear(staffId,lastYear);
+        //去年剩余年假
+        float daysLastYear = annualLeaveFlowLastYear.getTotalDays() - annualLeaveFlowLastYear.getPassDays() > 0f ? annualLeaveFlowLastYear.getTotalDays() - annualLeaveFlowLastYear.getPassDays() : 0f;
+
+        //剩余年假总数
+        float days = daysThisYear + daysLastYear;
+
         // 提交审核事件，计算剩余年假，年假不足则消息通知用户和审批人
         if ("start".equals(type)){
             //非撤销操作
@@ -348,12 +367,24 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         if ("finish".equals(type) && "agree".equals(result)){
             //撤销操作审批通过，需恢复数据
             if ("REVOKE".equalsIgnoreCase(biz_action)){
-                annualLeave.setPassDays(annualLeave.getPassDays() - durationInDay);
+                annualLeaveFlowLastYear.setPassDays(annualLeaveFlowLastYear.getPassDaysLast());
+                annualLeaveFlowThisYear.setPassDays(annualLeaveFlowThisYear.getPassDaysLast());
+                annualLeaveFlowThisYear.setPassDaysLast(0F);
+                annualLeaveFlowLastYear.setPassDaysLast(0F);
             }else {
                 //审批通过, 年假天数扣减
-                annualLeave.setPassDays(annualLeave.getPassDays() + durationInDay);
+                //保存历史请假天数
+                annualLeaveFlowLastYear.setPassDaysLast(annualLeaveFlowLastYear.getPassDays());
+                annualLeaveFlowThisYear.setPassDaysLast(annualLeaveFlowThisYear.getPassDays());
+                if (daysLastYear >= durationInDay){
+                    annualLeaveFlowLastYear.setPassDays(annualLeaveFlowLastYear.getPassDays()+durationInDay);
+                }else {
+                    annualLeaveFlowLastYear.setPassDays(annualLeaveFlowLastYear.getTotalDays());
+                    annualLeaveFlowThisYear.setPassDays(annualLeaveFlowThisYear.getPassDays() + durationInDay - daysLastYear);
+                }
             }
-            annualLeaveRepository.save(annualLeave);
+            annualLeaveFlowRepository.save(annualLeaveFlowThisYear);
+            annualLeaveFlowRepository.save(annualLeaveFlowLastYear);
         }
     }
 
@@ -501,12 +532,24 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         }
         AnnualLeaveView view = BeanUtils.copy(annualLeave, AnnualLeaveView.class);
         String userName = annualLeave.getUserName();
-        float days = annualLeave.getTotalDays() - annualLeave.getPassDays() > 0f ? annualLeave.getTotalDays() - annualLeave.getPassDays() : 0f;
-        view.setDays(days);
         if (!StringUtils.isEmpty(userName)){
             String lastName = userName.substring(1);
             view.setLastName(lastName);
         }
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.set(Calendar.MONTH, 0);
+        calendar.set(Calendar.DATE, 1);
+        AnnualLeaveFlow annualLeaveFlowThisYear = annualLeaveFlowRepository.findByUserIdAndYear(userId,calendar.getTime());
+        float daysThisYear = annualLeaveFlowThisYear.getTotalDays() - annualLeaveFlowThisYear.getPassDays() > 0f ? annualLeaveFlowThisYear.getTotalDays() - annualLeaveFlowThisYear.getPassDays() : 0f;
+        view.setDays(daysThisYear);
+
+        calendar.add(Calendar.YEAR,-1);
+        AnnualLeaveFlow annualLeaveFlowLastYear = annualLeaveFlowRepository.findByUserIdAndYear(userId,calendar.getTime());
+        float daysLastYear = annualLeaveFlowLastYear.getTotalDays() - annualLeaveFlowLastYear.getPassDays() > 0f ? annualLeaveFlowLastYear.getTotalDays() - annualLeaveFlowLastYear.getPassDays() : 0f;
+        view.setDaysLastYear(daysLastYear);
+
         return view;
     }
 }

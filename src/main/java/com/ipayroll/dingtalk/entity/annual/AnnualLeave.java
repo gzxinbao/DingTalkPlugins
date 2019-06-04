@@ -49,16 +49,6 @@ public class AnnualLeave extends BaseEntity {
     private Date joinWorkingTime;
 
     /**
-     * 总年假
-     */
-    private Float totalDays;
-
-    /**
-     * 已修年假
-     */
-    private Float passDays;
-
-    /**
      * 是否是管理员
      */
     private Boolean isAdmin;

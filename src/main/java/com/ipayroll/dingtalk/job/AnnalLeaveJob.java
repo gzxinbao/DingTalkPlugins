@@ -11,7 +11,9 @@ import com.dingtalk.api.response.OapiUserGetResponse;
 import com.ipayroll.dingtalk.common.URLConstant;
 import com.ipayroll.dingtalk.data.entity.ResponseCode;
 import com.ipayroll.dingtalk.entity.annual.AnnualLeave;
+import com.ipayroll.dingtalk.entity.annual.AnnualLeaveFlow;
 import com.ipayroll.dingtalk.exception.ServiceException;
+import com.ipayroll.dingtalk.repository.AnnualLeaveFlowRepository;
 import com.ipayroll.dingtalk.repository.AnnualLeaveRepository;
 import com.ipayroll.dingtalk.service.annual.AnnualLeaveService;
 import com.ipayroll.dingtalk.util.AccessTokenUtil;
@@ -28,10 +30,7 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @version 1.0.0
@@ -51,12 +50,14 @@ public class AnnalLeaveJob {
     private AnnualLeaveService annualLeaveService;
     @Resource
     private AnnualLeaveRepository annualLeaveRepository;
+    @Resource
+    private AnnualLeaveFlowRepository annualLeaveFlowRepository;
 
     /**
      * 每天0点同步钉钉用户数据
      */
     @Scheduled(cron = SYS_TIME)
-    public void synDataJob(){
+    public void synDataJob() throws ParseException {
         List<String> userIdList = annualLeaveService.getAllUserIdList();
         for (String userId : userIdList){
             Map<String, String> smartMap = getSmartWorkHrmEmployee(userId);
@@ -92,15 +93,13 @@ public class AnnalLeaveJob {
                 e.printStackTrace();
             }
 
+            //基本数据维护，空为新员工
             AnnualLeave annualLeave = annualLeaveRepository.findByUserId(userId);
-            //如果是新员工，已修年假初始为0，老员工不可修改已修年假
             if (annualLeave == null){
                 annualLeave = new AnnualLeave();
-                annualLeave.setPassDays(0f);
             }
             annualLeave.setUserId(userId);
             annualLeave.setUserName(userName);
-            annualLeave.setTotalDays(totalDays);
             try {
                 annualLeave.setConfirmJoinTime(sdf.parse(confirmJoinTime));
                 annualLeave.setJoinWorkingTime(sdf.parse(joinWorkingTime));
@@ -110,8 +109,40 @@ public class AnnalLeaveJob {
             OapiUserGetResponse response = annualLeaveService.getDingDingUser(userId);
             annualLeave.setIsAdmin(response.getIsAdmin());
             annualLeaveRepository.save(annualLeave);
+
+            //维护今年年假数据
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(new Date());
+            calendar.set(Calendar.MONTH, 0);
+            calendar.set(Calendar.DATE, 1);
+            Date thisYear = calendar.getTime();
+            AnnualLeaveFlow annualLeaveFlow = annualLeaveFlowRepository.findByUserIdAndYear(userId,thisYear);
+            if (annualLeaveFlow == null){
+                annualLeaveFlow = new AnnualLeaveFlow();
+                annualLeaveFlow.setPassDays(0F);
+                annualLeaveFlow.setPassDaysLast(0F);
+            }
+            annualLeaveFlow.setUserId(userId);
+            annualLeaveFlow.setYear(thisYear);
+            annualLeaveFlow.setTotalDays(totalDays);
+            annualLeaveFlowRepository.save(annualLeaveFlow);
+
+            //维护去年数据
+            calendar.add(Calendar.YEAR, -1);
+            Date lastYear = calendar.getTime();
+            AnnualLeaveFlow annualLeaveFlowLast = annualLeaveFlowRepository.findByUserIdAndYear(userId,lastYear);
+            if (annualLeaveFlowLast == null){
+                annualLeaveFlowLast = new AnnualLeaveFlow();
+                annualLeaveFlowLast.setPassDays(totalDays);
+                annualLeaveFlowLast.setUserId(userId);
+                annualLeaveFlowLast.setYear(lastYear);
+                annualLeaveFlowLast.setTotalDays(totalDays);
+                annualLeaveFlowLast.setPassDaysLast(0F);
+                annualLeaveFlowRepository.save(annualLeaveFlowLast);
+            }
         }
     }
+
 
     /**
      * 获取花名册信息
@@ -189,11 +220,43 @@ public class AnnalLeaveJob {
      */
     @Scheduled(cron = YEAR_TIME)
     @Transactional(rollbackFor = RuntimeException.class)
-    public void yearInitDataJob(){
+    public void yearInitDataJob() throws ParseException {
         List<AnnualLeave> annualLeaves = annualLeaveRepository.findAll();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
         for (AnnualLeave annualLeave : annualLeaves){
-            annualLeave.setPassDays(0F);
-            annualLeaveRepository.save(annualLeave);
+
+            String userId = annualLeave.getUserId();
+            Map<String, String> smartMap = getSmartWorkHrmEmployee(userId);
+            String joinWorkingTime = smartMap.get("joinWorkingTime");
+            String regularTime = smartMap.get("regularTime");
+            float totalDays = 0F;
+            try {
+                Date regularDate = sdf.parse(regularTime);
+                Date nowDate = new Date();
+                //已转正
+                if (regularDate.before(nowDate)){
+                    totalDays = DateUtil.calculationAnnualLeave(joinWorkingTime,sdf.format(nowDate));
+                }
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+            //新增一条今年年假数据
+            AnnualLeaveFlow annualLeaveFlow = new AnnualLeaveFlow();
+            annualLeaveFlow.setUserId(userId);
+            Date thisYear = calendar.getTime() ;
+            annualLeaveFlow.setYear(thisYear);
+            annualLeaveFlow.setPassDays(0F);
+            annualLeaveFlow.setTotalDays(totalDays);
+            annualLeaveFlowRepository.save(annualLeaveFlow);
+
+            //删除前年数据
+            calendar.add(Calendar.YEAR, -2);
+            Date beforeYear = calendar.getTime();
+            AnnualLeaveFlow annualLeaveFlowLast = annualLeaveFlowRepository.findByUserIdAndYear(userId,beforeYear);
+            annualLeaveFlowRepository.delete(annualLeaveFlowLast);
+
         }
     }
 }

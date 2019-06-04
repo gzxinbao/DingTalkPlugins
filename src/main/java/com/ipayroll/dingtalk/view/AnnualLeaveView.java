@@ -41,14 +41,14 @@ public class AnnualLeaveView implements Serializable {
     private Date joinWorkingTime;
 
     /**
-     * 总年假
-     */
-    private Float totalDays;
-
-    /**
-     * 剩余年假
+     * 今年剩余年假
      */
     private Float days;
+
+    /**
+     * 去年剩余年假
+     */
+    private Float daysLastYear;
 
     /**
      * 是否是管理员
