@@ -317,6 +317,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         String processInstanceId = callbackMsgJson.getString("processInstanceId");
         String type = callbackMsgJson.getString("type");
         String result = callbackMsgJson.getString("result");
+        String url = callbackMsgJson.getString("url");
         Map<String, Object> mapResult = getProcessInstance(processInstanceId);
         //年假天数
         Float durationInDay = (Float) mapResult.get("durationInDay");
@@ -333,13 +334,13 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
                 //年假不足
                 if (durationInDay.compareTo(days) == 1){
                     AnnualLeaveMessage annualLeaveMessageCommitter = annualLeaveMessageRepository.findByCheckMessage(CheckMessage.COMMITTER_ANNUAL);
-                    sendMessage(staffId,annualLeaveMessageCommitter.getContent());
+                    sendMessage(staffId,annualLeaveMessageCommitter.getContent(),url);
 
                     AnnualLeaveMessage annualLeaveMessageChecker = annualLeaveMessageRepository.findByCheckMessage(CheckMessage.CHECKER_ANNUAL);
                     Map<String, String> map = new HashMap<>();
                     map.put("userName",getDingDingUser(staffId).getName());
                     String content = PlaceholderUtils.resolvePlaceholders(annualLeaveMessageChecker.getContent(), map);
-                    sendMessage(checkIds,content);
+                    sendMessage(checkIds,content,url);
                 }
             }
         }
@@ -356,7 +357,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         }
     }
 
-    public void sendMessage(String userId,String content) {
+    public void sendMessage(String userId,String content,String url) {
         DingTalkClient client = new DefaultDingTalkClient(URLConstant.SEND_MESSAGE);
         OapiMessageCorpconversationAsyncsendV2Request request = new OapiMessageCorpconversationAsyncsendV2Request();
         request.setUseridList(userId);
@@ -364,11 +365,11 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         request.setToAllUser(false);
 
         OapiMessageCorpconversationAsyncsendV2Request.Msg msg = new OapiMessageCorpconversationAsyncsendV2Request.Msg();
-        msg.setMsgtype("text");
+        /*msg.setMsgtype("text");
         msg.setText(new OapiMessageCorpconversationAsyncsendV2Request.Text());
         msg.getText().setContent(content);
         request.setMsg(msg);
-
+*/
         /*msg.setMsgtype("image");
         msg.setImage(new OapiMessageCorpconversationAsyncsendV2Request.Image());
         msg.getImage().setMediaId("@lADOdvRYes0CbM0CbA");
@@ -377,17 +378,17 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         msg.setMsgtype("file");
         msg.setFile(new OapiMessageCorpconversationAsyncsendV2Request.File());
         msg.getFile().setMediaId("@lADOdvRYes0CbM0CbA");
-        request.setMsg(msg);
+        request.setMsg(msg);*/
 
         msg.setMsgtype("link");
         msg.setLink(new OapiMessageCorpconversationAsyncsendV2Request.Link());
-        msg.getLink().setTitle("test");
-        msg.getLink().setText("test");
-        msg.getLink().setMessageUrl("test");
-        msg.getLink().setPicUrl("test");
+        msg.getLink().setTitle("年假审批");
+        msg.getLink().setText(content);
+        msg.getLink().setMessageUrl(url);
+        msg.getLink().setPicUrl(url);
         request.setMsg(msg);
 
-        msg.setMsgtype("markdown");
+        /*msg.setMsgtype("markdown");
         msg.setMarkdown(new OapiMessageCorpconversationAsyncsendV2Request.Markdown());
         msg.getMarkdown().setText("##### text");
         msg.getMarkdown().setTitle("### Title");
@@ -418,6 +419,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         if (response.getErrcode() != ResponseCode.SUCCESS){
             throw new ServiceException(response.getMsg());
         }
+        logger.info("response-msg:"+response.getBody());
     }
 
     @Override
