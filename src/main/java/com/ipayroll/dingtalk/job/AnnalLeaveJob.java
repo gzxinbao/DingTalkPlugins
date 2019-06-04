@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
@@ -43,7 +44,8 @@ public class AnnalLeaveJob {
 
     private static final Logger logger = LoggerFactory.getLogger(AnnalLeaveJob.class);
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    private static final String TIME = "0 0 0 * * ?";
+    private static final String SYS_TIME = "0 0 0 * * ?";
+    private static final String YEAR_TIME = "0 0 0 1 1 ?";
 
     @Resource
     private AnnualLeaveService annualLeaveService;
@@ -53,7 +55,7 @@ public class AnnalLeaveJob {
     /**
      * 每天0点同步钉钉用户数据
      */
-    @Scheduled(cron = TIME)
+    @Scheduled(cron = SYS_TIME)
     public void synDataJob(){
         List<String> userIdList = annualLeaveService.getAllUserIdList();
         for (String userId : userIdList){
@@ -180,5 +182,18 @@ public class AnnalLeaveJob {
             }
         }
         return resultMap;
+    }
+
+    /**
+     * 每年一月一号，把全部员工已修年假归零，年假可以重修
+     */
+    @Scheduled(cron = YEAR_TIME)
+    @Transactional(rollbackFor = RuntimeException.class)
+    public void yearInitDataJob(){
+        List<AnnualLeave> annualLeaves = annualLeaveRepository.findAll();
+        for (AnnualLeave annualLeave : annualLeaves){
+            annualLeave.setPassDays(0F);
+            annualLeaveRepository.save(annualLeave);
+        }
     }
 }
