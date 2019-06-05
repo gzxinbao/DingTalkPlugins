@@ -16,7 +16,7 @@ import com.ipayroll.dingtalk.exception.ServiceException;
 import com.ipayroll.dingtalk.repository.AnnualLeaveFlowRepository;
 import com.ipayroll.dingtalk.repository.AnnualLeaveRepository;
 import com.ipayroll.dingtalk.service.annual.AnnualLeaveService;
-import com.ipayroll.dingtalk.util.AccessTokenUtil;
+import com.ipayroll.dingtalk.service.annual.AccessTokenUtil;
 import com.ipayroll.dingtalk.util.DateUtil;
 import com.taobao.api.ApiException;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +52,8 @@ public class AnnalLeaveJob {
     private AnnualLeaveRepository annualLeaveRepository;
     @Resource
     private AnnualLeaveFlowRepository annualLeaveFlowRepository;
+    @Resource
+    private AccessTokenUtil accessTokenUtil;
 
     /**
      * 每天凌晨3点同步钉钉用户数据
@@ -149,7 +151,7 @@ public class AnnalLeaveJob {
      * @param userId
      */
     public Map<String, String> getSmartWorkHrmEmployee(String userId){
-        String accessToken = AccessTokenUtil.getToken();
+        String accessToken = accessTokenUtil.getToken();
 
         //获取员工花名册信息
         DingTalkClient client = new DefaultDingTalkClient(URLConstant.SMARTWORK_HRM_EMPLOYEE);

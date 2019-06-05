@@ -6,10 +6,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication
 @EnableJpaAuditing
-public class DingtalkApplication {
+public class DingtalkApplication{
 
     public static void main(String[] args) {
         SpringApplication.run(DingtalkApplication.class, args);
     }
-
 }

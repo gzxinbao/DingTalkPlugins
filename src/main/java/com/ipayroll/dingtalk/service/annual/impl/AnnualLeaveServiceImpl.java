@@ -24,21 +24,18 @@ import com.ipayroll.dingtalk.repository.AnnualLeaveFlowRepository;
 import com.ipayroll.dingtalk.repository.AnnualLeaveLogRepository;
 import com.ipayroll.dingtalk.repository.AnnualLeaveMessageRepository;
 import com.ipayroll.dingtalk.repository.AnnualLeaveRepository;
+import com.ipayroll.dingtalk.service.annual.AccessTokenUtil;
 import com.ipayroll.dingtalk.service.annual.AnnualLeaveService;
 import com.ipayroll.dingtalk.util.*;
 import com.ipayroll.dingtalk.view.AnnualLeaveView;
 import com.ipayroll.dingtalk.view.UserViewItem;
 import com.taobao.api.ApiException;
-import com.taobao.api.TaobaoResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
-import java.rmi.ServerException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -63,6 +60,8 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
     private AnnualLeaveFlowRepository annualLeaveFlowRepository;
     @Resource
     private AnnualLeaveLogRepository annualLeaveLogRepository;
+    @Resource
+    private AccessTokenUtil accessTokenUtil;
 
     @Override
     public OapiUserGetuserinfoResponse getUserInfo(String requestAuthCode,String accessToken) {
@@ -83,7 +82,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
 
     @Override
     public void registerCallBack() {
-        String accessToken = AccessTokenUtil.getToken();
+        String accessToken = accessTokenUtil.getToken();
         DingTalkClient client = new DefaultDingTalkClient(URLConstant.REGISTER_CALL_BACK);
         OapiCallBackRegisterCallBackRequest request = new OapiCallBackRegisterCallBackRequest();
         request.setUrl(callbackConfig.getCallbackUrl()+callbackConfig.getCorpId());
@@ -140,7 +139,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
 
     @Override
     public JSONObject getCallBack() {
-        String accessToken = AccessTokenUtil.getToken();
+        String accessToken = accessTokenUtil.getToken();
         DingTalkClient  client = new DefaultDingTalkClient(URLConstant.GET_CALL_BACK);
         OapiCallBackGetCallBackRequest request = new OapiCallBackGetCallBackRequest();
         request.setHttpMethod("GET");
@@ -159,7 +158,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
 
     @Override
     public Map<String, Object> getProcessInstance(String processInstanceId) {
-        String accessToken = AccessTokenUtil.getToken();
+        String accessToken = accessTokenUtil.getToken();
         DingTalkClient client = new DefaultDingTalkClient(URLConstant.GET_PROCESSINSTANCE);
         OapiProcessinstanceGetRequest request = new OapiProcessinstanceGetRequest();
         request.setProcessInstanceId(processInstanceId);
@@ -225,7 +224,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
 
     @Override
     public void updateCallBack() {
-        String accessToken = AccessTokenUtil.getToken();
+        String accessToken = accessTokenUtil.getToken();
         DingTalkClient  client = new DefaultDingTalkClient(URLConstant.UPDATE_CALL_BACK);
         OapiCallBackUpdateCallBackRequest request = new OapiCallBackUpdateCallBackRequest();
         request.setUrl(callbackConfig.getCallbackUrl()+callbackConfig.getCorpId());
@@ -248,7 +247,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
 
     @Override
     public Map<String, Object> login(String requestAuthCode) {
-        String accessToken = AccessTokenUtil.getToken();
+        String accessToken = accessTokenUtil.getToken();
         OapiUserGetuserinfoResponse response = getUserInfo(requestAuthCode,accessToken);
         //3.查询得到当前用户的userId
         String userId = response.getUserid();
@@ -262,7 +261,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
 
     @Override
     public AnnualLeaveView getAnnualLeave(String requestAuthCode) {
-        String accessToken = AccessTokenUtil.getToken();
+        String accessToken = accessTokenUtil.getToken();
         OapiUserGetuserinfoResponse response = getUserInfo(requestAuthCode,accessToken);
         String userId = response.getUserid();
         AnnualLeaveView view = getUser(userId);
@@ -277,7 +276,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
     @Override
     public OapiUserGetResponse getDingDingUser(String userId) {
         try {
-            String accessToken = AccessTokenUtil.getToken();
+            String accessToken = accessTokenUtil.getToken();
             DingTalkClient client = new DefaultDingTalkClient(URLConstant.URL_USER_GET);
             OapiUserGetRequest request = new OapiUserGetRequest();
             request.setUserid(userId);
@@ -477,7 +476,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
 
         OapiMessageCorpconversationAsyncsendV2Response response = null;
         try {
-           response = client.execute(request,AccessTokenUtil.getToken());
+           response = client.execute(request,accessTokenUtil.getToken());
         } catch (ApiException e) {
             e.printStackTrace();
         }
@@ -498,7 +497,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         request.setHttpMethod("GET");
         OapiDepartmentListResponse response = null;
         try {
-            response = client.execute(request, AccessTokenUtil.getToken());
+            response = client.execute(request, accessTokenUtil.getToken());
         } catch (ApiException e) {
             e.printStackTrace();
         }
@@ -528,7 +527,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
             req.setHttpMethod("GET");
             OapiUserGetDeptMemberResponse rsp = null;
             try {
-                rsp = client.execute(req, AccessTokenUtil.getToken());
+                rsp = client.execute(req, accessTokenUtil.getToken());
             } catch (ApiException e) {
                 e.printStackTrace();
             }

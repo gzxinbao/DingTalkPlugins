@@ -10,7 +10,7 @@ import com.ipayroll.dingtalk.enums.CheckMessage;
 import com.ipayroll.dingtalk.job.AnnalLeaveJob;
 import com.ipayroll.dingtalk.repository.AnnualLeaveMessageRepository;
 import com.ipayroll.dingtalk.service.annual.impl.AnnualLeaveServiceImpl;
-import com.ipayroll.dingtalk.util.AccessTokenUtil;
+import com.ipayroll.dingtalk.service.annual.AccessTokenUtil;
 import com.taobao.api.ApiException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,6 +37,8 @@ public class DingtalkApplicationTests {
     private AnnualLeaveMessageRepository annualLeaveMessageRepository;
     @Resource
     private AnnualLeaveServiceImpl annualLeaveServiceimpl;
+    @Resource
+    private AccessTokenUtil accessTokenUtil;
 
     @Test
     public void registerCallBack() {
@@ -54,7 +56,7 @@ public class DingtalkApplicationTests {
         OapiMessageCorpconversationGetsendresultRequest request  = new OapiMessageCorpconversationGetsendresultRequest();
         request.setAgentId(265196732L);
         request.setTaskId(37090568640L);
-        OapiMessageCorpconversationGetsendresultResponse response = client.execute(request, AccessTokenUtil.getToken());
+        OapiMessageCorpconversationGetsendresultResponse response = client.execute(request, accessTokenUtil.getToken());
         System.out.println(response.getBody());
     }
 
