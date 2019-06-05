@@ -43,8 +43,8 @@ public class AnnalLeaveJob {
 
     private static final Logger logger = LoggerFactory.getLogger(AnnalLeaveJob.class);
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-    private static final String SYS_TIME = "0 0 0 * * ?";
-    private static final String YEAR_TIME = "0 0 0 1 1 ?";
+    private static final String SYS_TIME = "0 0 3 * * ?";
+    private static final String YEAR_TIME = "0 0 1 1 1 ?";
 
     @Resource
     private AnnualLeaveService annualLeaveService;
@@ -54,10 +54,10 @@ public class AnnalLeaveJob {
     private AnnualLeaveFlowRepository annualLeaveFlowRepository;
 
     /**
-     * 每天0点同步钉钉用户数据
+     * 每天凌晨3点同步钉钉用户数据
      */
     @Scheduled(cron = SYS_TIME)
-    public void synDataJob() throws ParseException {
+    public void synDataJob(){
         List<String> userIdList = annualLeaveService.getAllUserIdList();
         for (String userId : userIdList){
             Map<String, String> smartMap = getSmartWorkHrmEmployee(userId);
@@ -216,11 +216,11 @@ public class AnnalLeaveJob {
     }
 
     /**
-     * 每年一月一号，把全部员工已修年假归零，年假可以重修
+     * 每年一月一号凌晨1点，删除前年年假数据，并新增一条新的今年的
      */
     @Scheduled(cron = YEAR_TIME)
     @Transactional(rollbackFor = RuntimeException.class)
-    public void yearInitDataJob() throws ParseException {
+    public void yearInitDataJob() {
         List<AnnualLeave> annualLeaves = annualLeaveRepository.findAll();
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
@@ -245,13 +245,16 @@ public class AnnalLeaveJob {
             }
 
             //新增一条今年年假数据
-            AnnualLeaveFlow annualLeaveFlow = new AnnualLeaveFlow();
-            annualLeaveFlow.setUserId(userId);
-            Date thisYear = calendar.getTime() ;
-            annualLeaveFlow.setYear(thisYear);
-            annualLeaveFlow.setPassDays(0F);
-            annualLeaveFlow.setTotalDays(totalDays);
-            annualLeaveFlowRepository.save(annualLeaveFlow);
+            Date thisYear = calendar.getTime();
+            AnnualLeaveFlow annualLeaveFlow = annualLeaveFlowRepository.findByUserIdAndYear(userId,thisYear);
+            if (annualLeaveFlow == null){
+                annualLeaveFlow = new AnnualLeaveFlow();
+                annualLeaveFlow.setUserId(userId);
+                annualLeaveFlow.setYear(thisYear);
+                annualLeaveFlow.setPassDays(0F);
+                annualLeaveFlow.setTotalDays(totalDays);
+                annualLeaveFlowRepository.save(annualLeaveFlow);
+            }
 
             //删除前年数据
             calendar.add(Calendar.YEAR, -2);
