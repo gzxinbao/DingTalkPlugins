@@ -14,11 +14,14 @@ import com.ipayroll.dingtalk.config.CallbackConfig;
 import com.ipayroll.dingtalk.data.entity.ResponseCode;
 import com.ipayroll.dingtalk.entity.annual.AnnualLeave;
 import com.ipayroll.dingtalk.entity.annual.AnnualLeaveFlow;
+import com.ipayroll.dingtalk.entity.annual.AnnualLeaveLog;
 import com.ipayroll.dingtalk.entity.annual.AnnualLeaveMessage;
 import com.ipayroll.dingtalk.enums.CheckMessage;
+import com.ipayroll.dingtalk.enums.CheckType;
 import com.ipayroll.dingtalk.enums.SuitePushType;
 import com.ipayroll.dingtalk.exception.ServiceException;
 import com.ipayroll.dingtalk.repository.AnnualLeaveFlowRepository;
+import com.ipayroll.dingtalk.repository.AnnualLeaveLogRepository;
 import com.ipayroll.dingtalk.repository.AnnualLeaveMessageRepository;
 import com.ipayroll.dingtalk.repository.AnnualLeaveRepository;
 import com.ipayroll.dingtalk.service.annual.AnnualLeaveService;
@@ -58,6 +61,8 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
     private AnnualLeaveMessageRepository annualLeaveMessageRepository;
     @Resource
     private AnnualLeaveFlowRepository annualLeaveFlowRepository;
+    @Resource
+    private AnnualLeaveLogRepository annualLeaveLogRepository;
 
     @Override
     public OapiUserGetuserinfoResponse getUserInfo(String requestAuthCode,String accessToken) {
@@ -346,12 +351,25 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         //剩余年假总数
         float days = daysThisYear + daysLastYear;
 
+        /**
+         * log记录
+         */
+        AnnualLeaveLog annualLeaveLog = new AnnualLeaveLog();
+        annualLeaveLog.setUserId(staffId);
+        annualLeaveLog.setDurationInDay(durationInDay);
+        annualLeaveLog.setDaysThisYear(daysThisYear);
+        annualLeaveLog.setDaysLastYear(daysLastYear);
+
         // 提交审核事件，计算剩余年假，年假不足则消息通知用户和审批人
         if ("start".equals(type)){
             //非撤销操作
             if (!"REVOKE".equalsIgnoreCase(biz_action)){
                 //年假不足
                 if (durationInDay.compareTo(days) == 1){
+
+                    annualLeaveLog.setCheckType(CheckType.NOT_ENOUGH);
+                    annualLeaveLogRepository.save(annualLeaveLog);
+
                     AnnualLeaveMessage annualLeaveMessageCommitter = annualLeaveMessageRepository.findByCheckMessage(CheckMessage.COMMITTER_ANNUAL);
                     sendMessage(staffId,annualLeaveMessageCommitter.getContent(),url);
 
@@ -365,15 +383,23 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         }
         //审核结束事件，通过
         if ("finish".equals(type) && "agree".equals(result)){
-            //撤销操作审批通过，需恢复数据
+            //审批通过后，撤销，需恢复数据
             if ("REVOKE".equalsIgnoreCase(biz_action)){
+
+                annualLeaveLog.setCheckType(CheckType.REVOKE);
+                annualLeaveLogRepository.save(annualLeaveLog);
+
                 annualLeaveFlowLastYear.setPassDays(annualLeaveFlowLastYear.getPassDaysLast());
                 annualLeaveFlowThisYear.setPassDays(annualLeaveFlowThisYear.getPassDaysLast());
                 annualLeaveFlowThisYear.setPassDaysLast(0F);
                 annualLeaveFlowLastYear.setPassDaysLast(0F);
             }else {
                 //审批通过, 年假天数扣减
-                //保存历史请假天数
+
+                annualLeaveLog.setCheckType(CheckType.AGREE);
+                annualLeaveLogRepository.save(annualLeaveLog);
+
+                //保存这次请假天数，若有撤销则用到
                 annualLeaveFlowLastYear.setPassDaysLast(annualLeaveFlowLastYear.getPassDays());
                 annualLeaveFlowThisYear.setPassDaysLast(annualLeaveFlowThisYear.getPassDays());
                 if (daysLastYear >= durationInDay){
@@ -385,6 +411,12 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
             }
             annualLeaveFlowRepository.save(annualLeaveFlowThisYear);
             annualLeaveFlowRepository.save(annualLeaveFlowLastYear);
+        }
+
+        //审核结束事件，通过
+        if ("finish".equals(type) && "refuse".equals(result)){
+            annualLeaveLog.setCheckType(CheckType.REFUSE);
+            annualLeaveLogRepository.save(annualLeaveLog);
         }
     }
 

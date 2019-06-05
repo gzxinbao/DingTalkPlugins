@@ -224,6 +224,8 @@ public class AnnalLeaveJob {
         List<AnnualLeave> annualLeaves = annualLeaveRepository.findAll();
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
+        calendar.set(Calendar.MONTH, 0);
+        calendar.set(Calendar.DATE, 1);
         for (AnnualLeave annualLeave : annualLeaves){
 
             String userId = annualLeave.getUserId();
@@ -255,8 +257,9 @@ public class AnnalLeaveJob {
             calendar.add(Calendar.YEAR, -2);
             Date beforeYear = calendar.getTime();
             AnnualLeaveFlow annualLeaveFlowLast = annualLeaveFlowRepository.findByUserIdAndYear(userId,beforeYear);
-            annualLeaveFlowRepository.delete(annualLeaveFlowLast);
-
+            if (annualLeaveFlowLast != null){
+                annualLeaveFlowRepository.delete(annualLeaveFlowLast);
+            }
         }
     }
 }
