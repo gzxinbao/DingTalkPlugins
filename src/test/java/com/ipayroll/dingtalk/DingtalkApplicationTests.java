@@ -9,8 +9,6 @@ import com.ipayroll.dingtalk.entity.annual.AnnualLeaveMessage;
 import com.ipayroll.dingtalk.enums.CheckMessage;
 import com.ipayroll.dingtalk.job.AnnalLeaveJob;
 import com.ipayroll.dingtalk.repository.AnnualLeaveMessageRepository;
-import com.ipayroll.dingtalk.repository.AnnualLeaveRepository;
-import com.ipayroll.dingtalk.service.annual.AnnualLeaveService;
 import com.ipayroll.dingtalk.service.annual.impl.AnnualLeaveServiceImpl;
 import com.ipayroll.dingtalk.util.AccessTokenUtil;
 import com.taobao.api.ApiException;
