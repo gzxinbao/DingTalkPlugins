@@ -413,7 +413,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
             annualLeaveFlowRepository.save(annualLeaveFlowLastYear);
         }
 
-        //审核结束事件，通过
+        //审核结束事件，拒绝
         if ("finish".equals(type) && "refuse".equals(result)){
             annualLeaveLog.setCheckType(CheckType.REFUSE);
             annualLeaveLogRepository.save(annualLeaveLog);
