@@ -31,6 +31,12 @@ public class AnnualLeaveLog extends BaseEntity {
     @Column(length = 200)
     private String userId;
 
+    /**
+     * 描述
+     */
+    @Column(length = 200)
+    private String title;
+
     @Enumerated(EnumType.STRING)
     private CheckType checkType;
 

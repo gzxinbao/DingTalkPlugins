@@ -327,6 +327,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         String type = callbackMsgJson.getString("type");
         String result = callbackMsgJson.getString("result");
         String url = callbackMsgJson.getString("url");
+        String title = callbackMsgJson.getString("title");
         Map<String, Object> mapResult = getProcessInstance(processInstanceId);
         //年假天数
         Float durationInDay = (Float) mapResult.get("durationInDay");
@@ -356,6 +357,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
          */
         AnnualLeaveLog annualLeaveLog = new AnnualLeaveLog();
         annualLeaveLog.setUserId(staffId);
+        annualLeaveLog.setTitle(title);
         annualLeaveLog.setDurationInDay(durationInDay);
         annualLeaveLog.setDaysThisYear(daysThisYear);
         annualLeaveLog.setDaysLastYear(daysLastYear);
