@@ -2,6 +2,7 @@ package com.ipayroll.dingtalk.controller.annual;
 
 import com.alibaba.fastjson.JSONObject;
 import com.ipayroll.dingtalk.data.controller.BaseController;
+import com.ipayroll.dingtalk.job.AnnalLeaveJob;
 import com.ipayroll.dingtalk.service.annual.AnnualLeaveService;
 import com.ipayroll.dingtalk.view.AnnualLeaveView;
 import com.ipayroll.dingtalk.view.UserViewItem;
@@ -22,6 +23,8 @@ public class AnnualLeaveController extends BaseController {
 
     @Resource
     private AnnualLeaveService indexService;
+    @Resource
+    private AnnalLeaveJob annalLeaveJob;
 
     /**
      * 钉钉用户登录，显示当前登录用户的userId和名称
@@ -160,6 +163,14 @@ public class AnnualLeaveController extends BaseController {
         AnnualLeaveView view = indexService.getUser(userId);
         return responseCallback(view);
     }
+
+    @RequestMapping(value = "/synDataJob", method = RequestMethod.GET)
+    @ResponseBody
+    public String synDataJob() {
+        annalLeaveJob.synDataJob();
+        return responseCallback("同步完成");
+    }
+
 
 }
 
