@@ -41,12 +41,12 @@ public class DingtalkApplicationTests {
     private AccessTokenUtil accessTokenUtil;
 
     @Test
-    public void registerCallBack() {
+    public void registerCallBack() throws ApiException {
         indexController.registerCallBack();
     }
 
     @Test
-    public void synDataJob() throws ParseException {
+    public void synDataJob(){
         annalLeaveJob.synDataJob();
     }
 
@@ -61,7 +61,7 @@ public class DingtalkApplicationTests {
     }
 
     @Test
-    public void sendMessage(){
+    public void sendMessage() throws ApiException {
         AnnualLeaveMessage annualLeaveMessageCommitter = annualLeaveMessageRepository.findByCheckMessage(CheckMessage.COMMITTER_ANNUAL);
         String url = "https://aflow.dingtalk.com/dingtalk/mobile/homepage.htm?corpid=ding9756ae917ae4830f35c2f4657eb6378f&dd_share=false&showmenu=true&dd_progress=false&back=native&procInstId=96caa30a-49bf-4ae4-81ae-bd93969b5d96&taskId=&swfrom=isv&dinghash=approval&dd_from=#approval";
         annualLeaveServiceimpl.sendMessage("144162032021168262",annualLeaveMessageCommitter.getContent(),url);

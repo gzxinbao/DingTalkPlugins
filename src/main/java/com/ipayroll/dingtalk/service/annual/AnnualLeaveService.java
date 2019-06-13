@@ -5,6 +5,7 @@ import com.dingtalk.api.response.OapiUserGetResponse;
 import com.dingtalk.api.response.OapiUserGetuserinfoResponse;
 import com.ipayroll.dingtalk.view.AnnualLeaveView;
 import com.ipayroll.dingtalk.view.UserViewItem;
+import com.taobao.api.ApiException;
 
 import java.util.List;
 import java.util.Map;
@@ -27,7 +28,7 @@ public interface AnnualLeaveService {
     /**
      * 注册回调
      */
-    void registerCallBack();
+    void registerCallBack() throws ApiException;
 
     /**
      * 接收回调
@@ -44,19 +45,19 @@ public interface AnnualLeaveService {
      * 查询回调信息
      * @return
      */
-    JSONObject getCallBack();
+    JSONObject getCallBack() throws ApiException;
 
     /**
      * 获取实例
      * @param processInstanceId
      * @return
      */
-    Map<String, Object> getProcessInstance(String processInstanceId);
+    Map<String, Object> getProcessInstance(String processInstanceId) throws ApiException;
 
     /**
      * 更新回调
      */
-    void updateCallBack();
+    void updateCallBack() throws ApiException;
 
     /**
      * 登录

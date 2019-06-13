@@ -6,6 +6,7 @@ import com.ipayroll.dingtalk.job.AnnalLeaveJob;
 import com.ipayroll.dingtalk.service.annual.AnnualLeaveService;
 import com.ipayroll.dingtalk.view.AnnualLeaveView;
 import com.ipayroll.dingtalk.view.UserViewItem;
+import com.taobao.api.ApiException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -41,7 +42,6 @@ public class AnnualLeaveController extends BaseController {
     /**
      * 查询年假
      * @param requestAuthCode
-     * @param selectTime 速算日期
      * @return
      */
     @RequestMapping(value = "/getAnnualLeave", method = RequestMethod.GET)
@@ -57,7 +57,7 @@ public class AnnualLeaveController extends BaseController {
      */
     @RequestMapping(value = "/registerCallBack", method = RequestMethod.POST)
     @ResponseBody
-    public String registerCallBack(){
+    public String registerCallBack() throws ApiException {
         indexService.registerCallBack();
         return responseCallback("注册成功");
     }
@@ -90,7 +90,7 @@ public class AnnualLeaveController extends BaseController {
      */
     @RequestMapping(value = "/getCallBack", method = RequestMethod.GET)
     @ResponseBody
-    public String getCallBack() {
+    public String getCallBack() throws ApiException {
         JSONObject result =  indexService.getCallBack();
         return responseCallback(result);
     }
@@ -101,7 +101,7 @@ public class AnnualLeaveController extends BaseController {
      */
     @RequestMapping(value = "/updateCallBack", method = RequestMethod.POST)
     @ResponseBody
-    public String updateCallBack() {
+    public String updateCallBack() throws ApiException {
         indexService.updateCallBack();
         return responseCallback("更新事件回调接口成功");
     }
@@ -113,7 +113,7 @@ public class AnnualLeaveController extends BaseController {
      */
     @RequestMapping(value = "/getProcessInstance/{processInstanceId}", method = RequestMethod.GET)
     @ResponseBody
-    public String getProcessInstance(@PathVariable("processInstanceId") String processInstanceId){
+    public String getProcessInstance(@PathVariable("processInstanceId") String processInstanceId) throws ApiException {
         Map<String, Object> map =  indexService.getProcessInstance(processInstanceId);
         return responseCallback(map);
     }
@@ -170,7 +170,6 @@ public class AnnualLeaveController extends BaseController {
         annalLeaveJob.synDataJob();
         return responseCallback("同步完成");
     }
-
 
 }
 

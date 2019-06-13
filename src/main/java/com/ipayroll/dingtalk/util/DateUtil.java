@@ -2,6 +2,7 @@ package com.ipayroll.dingtalk.util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -33,4 +34,29 @@ public class DateUtil {
         }
         return days;
     }
+
+    public static Date getThisYearFirstDay(){
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        calendar.set(Calendar.MONTH, 0);
+        calendar.set(Calendar.DATE, 1);
+        return calendar.getTime();
+    }
+
+    public static Date getLastYearFirstDay(){
+        Calendar calendar = Calendar.getInstance();
+        Date thisYear = getThisYearFirstDay();
+        calendar.setTime(thisYear);
+        calendar.add(Calendar.YEAR,-1);
+        return calendar.getTime();
+    }
+
+    public static Date getBeforeYearFirstDay(){
+        Calendar calendar = Calendar.getInstance();
+        Date thisYear = getThisYearFirstDay();
+        calendar.setTime(thisYear);
+        calendar.add(Calendar.YEAR,-2);
+        return calendar.getTime();
+    }
+
 }

@@ -59,6 +59,7 @@ public class AnnalLeaveJob {
      * 每天凌晨3点同步钉钉用户数据
      */
     @Scheduled(cron = SYS_TIME)
+    @Transactional(rollbackFor = RuntimeException.class)
     public void synDataJob(){
         List<String> userIdList = annualLeaveService.getAllUserIdList();
         for (String userId : userIdList){
@@ -70,17 +71,14 @@ public class AnnalLeaveJob {
             if (StringUtils.isEmpty(regularTime)){
                 logger.error(userName+"在钉钉上转正日期未设置，请先联系管理员设置！");
                 continue;
-                //throw new ServiceException(userName+"在钉钉上转正日期未设置，请先联系管理员设置！");
             }
             if (StringUtils.isEmpty(joinWorkingTime)){
                 logger.error(userName+"在钉钉上首次工作时间未设置，请先联系管理员设置！");
                 continue;
-                //throw new ServiceException(userName+"钉钉上首次工作时间未设置，请先联系管理员设置！");
             }
             if (StringUtils.isEmpty(confirmJoinTime)){
                 logger.error(userName+"在钉钉上入职时间未设置，请先联系管理员设置！");
                 continue;
-                //throw new ServiceException(userName+"在钉钉上入职时间未设置，请先联系管理员设置！");
             }
 
             float totalDays = 0F;
@@ -113,11 +111,7 @@ public class AnnalLeaveJob {
             annualLeaveRepository.save(annualLeave);
 
             //维护今年年假数据
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTime(new Date());
-            calendar.set(Calendar.MONTH, 0);
-            calendar.set(Calendar.DATE, 1);
-            Date thisYear = calendar.getTime();
+            Date thisYear = DateUtil.getThisYearFirstDay();
             AnnualLeaveFlow annualLeaveFlow = annualLeaveFlowRepository.findByUserIdAndYear(userId,thisYear);
             if (annualLeaveFlow == null){
                 annualLeaveFlow = new AnnualLeaveFlow();
@@ -129,9 +123,8 @@ public class AnnalLeaveJob {
             annualLeaveFlow.setTotalDays(totalDays);
             annualLeaveFlowRepository.save(annualLeaveFlow);
 
-            //维护去年数据
-            calendar.add(Calendar.YEAR, -1);
-            Date lastYear = calendar.getTime();
+            //维护去年数据，已存在数据不可更改
+            Date lastYear = DateUtil.getLastYearFirstDay();
             AnnualLeaveFlow annualLeaveFlowLast = annualLeaveFlowRepository.findByUserIdAndYear(userId,lastYear);
             if (annualLeaveFlowLast == null){
                 annualLeaveFlowLast = new AnnualLeaveFlow();
@@ -224,12 +217,7 @@ public class AnnalLeaveJob {
     @Transactional(rollbackFor = RuntimeException.class)
     public void yearInitDataJob() {
         List<AnnualLeave> annualLeaves = annualLeaveRepository.findAll();
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
-        calendar.set(Calendar.MONTH, 0);
-        calendar.set(Calendar.DATE, 1);
         for (AnnualLeave annualLeave : annualLeaves){
-
             String userId = annualLeave.getUserId();
             Map<String, String> smartMap = getSmartWorkHrmEmployee(userId);
             String joinWorkingTime = smartMap.get("joinWorkingTime");
@@ -247,7 +235,7 @@ public class AnnalLeaveJob {
             }
 
             //新增一条今年年假数据
-            Date thisYear = calendar.getTime();
+            Date thisYear = DateUtil.getThisYearFirstDay();
             AnnualLeaveFlow annualLeaveFlow = annualLeaveFlowRepository.findByUserIdAndYear(userId,thisYear);
             if (annualLeaveFlow == null){
                 annualLeaveFlow = new AnnualLeaveFlow();
@@ -259,11 +247,10 @@ public class AnnalLeaveJob {
             }
 
             //删除前年数据
-            calendar.add(Calendar.YEAR, -2);
-            Date beforeYear = calendar.getTime();
-            AnnualLeaveFlow annualLeaveFlowLast = annualLeaveFlowRepository.findByUserIdAndYear(userId,beforeYear);
-            if (annualLeaveFlowLast != null){
-                annualLeaveFlowRepository.delete(annualLeaveFlowLast);
+            Date beforeYear = DateUtil.getBeforeYearFirstDay();
+            AnnualLeaveFlow annualLeaveFlowBefore = annualLeaveFlowRepository.findByUserIdAndYear(userId,beforeYear);
+            if (annualLeaveFlowBefore != null){
+                annualLeaveFlowRepository.delete(annualLeaveFlowBefore);
             }
         }
     }

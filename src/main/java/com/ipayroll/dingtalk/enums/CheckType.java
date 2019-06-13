@@ -11,6 +11,8 @@ import com.alibaba.fastjson.annotation.JSONType;
 @JSONType(serializeEnumAsJavaBean = true)
 public enum CheckType {
 
+    START("审批事件开始"),
+    FINISH("审批事件结束"),
     AGREE("审批通过"),
     REVOKE("撤销"),
     NOT_ENOUGH("年假不足"),

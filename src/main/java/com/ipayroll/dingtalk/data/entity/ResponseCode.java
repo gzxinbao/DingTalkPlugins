@@ -11,7 +11,8 @@ package com.ipayroll.dingtalk.data.entity;
  */
 public interface ResponseCode {
 
-    long SUCCESS = 0L;			     // 成功
-    long ERROR = -1L;			    // 失败
+    long SUCCESS = 0L;
+    long ERROR = -1L;
+    long BACK_EXIT = 71006L;
 
 }

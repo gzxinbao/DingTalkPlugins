@@ -30,6 +30,8 @@ import com.ipayroll.dingtalk.util.*;
 import com.ipayroll.dingtalk.view.AnnualLeaveView;
 import com.ipayroll.dingtalk.view.UserViewItem;
 import com.taobao.api.ApiException;
+import com.taobao.api.BaseTaobaoRequest;
+import com.taobao.api.TaobaoResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -81,7 +83,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
     }
 
     @Override
-    public void registerCallBack() {
+    public void registerCallBack() throws ApiException {
         String accessToken = accessTokenUtil.getToken();
         DingTalkClient client = new DefaultDingTalkClient(URLConstant.REGISTER_CALL_BACK);
         OapiCallBackRegisterCallBackRequest request = new OapiCallBackRegisterCallBackRequest();
@@ -92,13 +94,12 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         callbackTagList.add(SuitePushType.BPMS_TASK_CHANGE.getKey());
         callbackTagList.add(SuitePushType.BPMS_INSTANCE_CHANGE.getKey());
         request.setCallBackTag(callbackTagList);
-        OapiCallBackRegisterCallBackResponse response = null;
-        try {
-            response = client.execute(request,accessToken);
-        } catch (ApiException e) {
-            e.printStackTrace();
-        }
-        if (response.getErrcode() != ResponseCode.SUCCESS){
+        OapiCallBackRegisterCallBackResponse response = client.execute(request,accessToken);
+        //回调地址已经存在
+        if (response.getErrcode() == ResponseCode.BACK_EXIT){
+            //更新回调
+            updateCallBack();
+        } else if (response.getErrcode() != ResponseCode.SUCCESS){
             throw new ServiceException(response.getMsg());
         }
     }
@@ -113,13 +114,6 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
             DingTalkEncryptor dingTalkEncryptor = new DingTalkEncryptor(token, aesKey, corpId);
             String encryptMsg = json.getString("encrypt");
             String plainText = dingTalkEncryptor.getDecryptMsg(signature,timestamp,nonce,encryptMsg);
-            logger.info("解密之后明文消息: ");
-            logger.info("corpId", corpId);
-            logger.info("signature", signature);
-            logger.info("timestamp", timestamp);
-            logger.info("nonce", nonce);
-            logger.info("json", json);
-            logger.info("plainText", plainText);
 
             //具体业务处理,返回给钉钉开放平台返回的明文数据
             String returnStr = isvCallbackEvent(plainText,corpId) ;
@@ -128,27 +122,22 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
             return encryptedMap;
         }catch (Exception e){
             logger.info("解密失败程序异常: ");
-            logger.info("corpId", corpId);
-            logger.info("signature", signature);
-            logger.info("timestamp", timestamp);
-            logger.info("nonce", nonce);
-            logger.info("json", json);
+            logger.info("corpId:"+ corpId);
+            logger.info("signature:"+ signature);
+            logger.info("timestamp:"+ timestamp);
+            logger.info("nonce:"+ nonce);
+            logger.info("json:"+ json);
             return encryptedMap;
         }
     }
 
     @Override
-    public JSONObject getCallBack() {
+    public JSONObject getCallBack() throws ApiException {
         String accessToken = accessTokenUtil.getToken();
         DingTalkClient  client = new DefaultDingTalkClient(URLConstant.GET_CALL_BACK);
         OapiCallBackGetCallBackRequest request = new OapiCallBackGetCallBackRequest();
         request.setHttpMethod("GET");
-        OapiCallBackGetCallBackResponse response = null;
-        try {
-            response = client.execute(request,accessToken);
-        } catch (ApiException e) {
-            e.printStackTrace();
-        }
+        OapiCallBackGetCallBackResponse response =client.execute(request,accessToken);
         if (response.getErrcode() != ResponseCode.SUCCESS){
             throw new ServiceException(response.getMsg());
         }
@@ -157,17 +146,12 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
     }
 
     @Override
-    public Map<String, Object> getProcessInstance(String processInstanceId) {
+    public Map<String, Object> getProcessInstance(String processInstanceId) throws ApiException {
         String accessToken = accessTokenUtil.getToken();
         DingTalkClient client = new DefaultDingTalkClient(URLConstant.GET_PROCESSINSTANCE);
         OapiProcessinstanceGetRequest request = new OapiProcessinstanceGetRequest();
         request.setProcessInstanceId(processInstanceId);
-        OapiProcessinstanceGetResponse response = null;
-        try {
-            response = client.execute(request,accessToken);
-        } catch (ApiException e) {
-            e.printStackTrace();
-        }
+        OapiProcessinstanceGetResponse response = client.execute(request,accessToken);
         if (response.getErrcode() != ResponseCode.SUCCESS){
             throw new ServiceException(response.getMsg());
         }
@@ -223,7 +207,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
     }
 
     @Override
-    public void updateCallBack() {
+    public void updateCallBack() throws ApiException {
         String accessToken = accessTokenUtil.getToken();
         DingTalkClient  client = new DefaultDingTalkClient(URLConstant.UPDATE_CALL_BACK);
         OapiCallBackUpdateCallBackRequest request = new OapiCallBackUpdateCallBackRequest();
@@ -234,12 +218,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         callbackTagList.add(SuitePushType.BPMS_TASK_CHANGE.getKey());
         callbackTagList.add(SuitePushType.BPMS_INSTANCE_CHANGE.getKey());
         request.setCallBackTag(callbackTagList);
-        OapiCallBackUpdateCallBackResponse response = null;
-        try {
-            response = client.execute(request,accessToken);
-        } catch (ApiException e) {
-            e.printStackTrace();
-        }
+        OapiCallBackUpdateCallBackResponse response = client.execute(request,accessToken);
         if (response.getErrcode() != ResponseCode.SUCCESS){
             throw new ServiceException(response.getMsg());
         }
@@ -293,13 +272,12 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
     }
 
     /**
-     * 处理各种回调时间的TAG。这个维度的回调是和套件相关的
-     * @param callbackMsg   钉钉开放平台给ISV套件回调的明文数据
-     * @param corpId      套件SuiteKey
+     * 处理各种回调
+     * @param callbackMsg
+     * @param corpId
      */
-    private String isvCallbackEvent(String callbackMsg,String corpId) {
+    private String isvCallbackEvent(String callbackMsg,String corpId) throws ApiException {
         JSONObject callbackMsgJson = JSONObject.parseObject(callbackMsg);
-        logger.info("callbackMsgJson: "+callbackMsgJson);
         String eventType = callbackMsgJson.getString("EventType");
         //默认返回success明文。
         String responseEncryMsg = "success";
@@ -320,7 +298,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         return responseEncryMsg;
     }
 
-    private void handlerCallback(JSONObject callbackMsgJson) {
+    private void handlerCallback(JSONObject callbackMsgJson) throws ApiException {
         String staffId = callbackMsgJson.getString("staffId");
         String processInstanceId = callbackMsgJson.getString("processInstanceId");
         String type = callbackMsgJson.getString("type");
@@ -333,18 +311,19 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         String checkIds = (String)mapResult.get("checkId");
         String biz_action = (String)mapResult.get("biz_action");
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
-        calendar.set(Calendar.MONTH, 0);
-        calendar.set(Calendar.DATE, 1);
-        Date thisYear = calendar.getTime();
+        Date thisYear = DateUtil.getThisYearFirstDay();
         AnnualLeaveFlow annualLeaveFlowThisYear = annualLeaveFlowRepository.findByUserIdAndYear(staffId,thisYear);
+        if (annualLeaveFlowThisYear == null){
+            throw new ServiceException("员工id: "+staffId+" 今年数据不存在导致请年假失败，检查数据！");
+        }
         //今年剩余年假
         float daysThisYear = annualLeaveFlowThisYear.getTotalDays() - annualLeaveFlowThisYear.getPassDays() > 0f ? annualLeaveFlowThisYear.getTotalDays() - annualLeaveFlowThisYear.getPassDays() : 0f;
 
-        calendar.add(Calendar.YEAR,-1);
-        Date lastYear = calendar.getTime();
+        Date lastYear = DateUtil.getLastYearFirstDay();
         AnnualLeaveFlow annualLeaveFlowLastYear = annualLeaveFlowRepository.findByUserIdAndYear(staffId,lastYear);
+        if (annualLeaveFlowLastYear == null){
+            throw new ServiceException("员工id: "+staffId+" 去年数据不存在导致请年假失败，检查数据！");
+        }
         //去年剩余年假
         float daysLastYear = annualLeaveFlowLastYear.getTotalDays() - annualLeaveFlowLastYear.getPassDays() > 0f ? annualLeaveFlowLastYear.getTotalDays() - annualLeaveFlowLastYear.getPassDays() : 0f;
 
@@ -352,7 +331,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         float days = daysThisYear + daysLastYear;
 
         /**
-         * log记录
+         * 操作日志记录
          */
         AnnualLeaveLog annualLeaveLog = new AnnualLeaveLog();
         annualLeaveLog.setUserId(staffId);
@@ -361,67 +340,65 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         annualLeaveLog.setDaysThisYear(daysThisYear);
         annualLeaveLog.setDaysLastYear(daysLastYear);
 
+        logger.info("type: "+type);
+        logger.info("result: "+result);
+        logger.info("biz_action: "+biz_action);
+
         // 提交审核事件，计算剩余年假，年假不足则消息通知用户和审批人
-        if ("start".equals(type)){
-            //非撤销操作
-            if (!"REVOKE".equalsIgnoreCase(biz_action)){
-                //年假不足
-                if (durationInDay.compareTo(days) == 1){
+        if (CheckType.START.getName().equalsIgnoreCase(type)){
+            //非撤销操作，年假不足
+            if (!CheckType.REVOKE.getName().equalsIgnoreCase(biz_action) && (durationInDay.compareTo(days) == 1)) {
+                annualLeaveLog.setCheckType(CheckType.NOT_ENOUGH);
+                annualLeaveLogRepository.save(annualLeaveLog);
 
-                    annualLeaveLog.setCheckType(CheckType.NOT_ENOUGH);
-                    annualLeaveLogRepository.save(annualLeaveLog);
+                AnnualLeaveMessage annualLeaveMessageCommitter = annualLeaveMessageRepository.findByCheckMessage(CheckMessage.COMMITTER_ANNUAL);
+                sendMessage(staffId, annualLeaveMessageCommitter.getContent(), url);
 
-                    AnnualLeaveMessage annualLeaveMessageCommitter = annualLeaveMessageRepository.findByCheckMessage(CheckMessage.COMMITTER_ANNUAL);
-                    sendMessage(staffId,annualLeaveMessageCommitter.getContent(),url);
-
-                    AnnualLeaveMessage annualLeaveMessageChecker = annualLeaveMessageRepository.findByCheckMessage(CheckMessage.CHECKER_ANNUAL);
-                    Map<String, String> map = new HashMap<>();
-                    map.put("userName",getDingDingUser(staffId).getName());
-                    String content = PlaceholderUtils.resolvePlaceholders(annualLeaveMessageChecker.getContent(), map);
-                    sendMessage(checkIds,content,url);
-                }
+                AnnualLeaveMessage annualLeaveMessageChecker = annualLeaveMessageRepository.findByCheckMessage(CheckMessage.CHECKER_ANNUAL);
+                Map<String, String> map = new HashMap<>();
+                map.put("userName", getDingDingUser(staffId).getName());
+                String content = PlaceholderUtils.resolvePlaceholders(annualLeaveMessageChecker.getContent(), map);
+                sendMessage(checkIds, content, url);
             }
         }
-        //审核结束事件，通过
-        if ("finish".equals(type) && "agree".equals(result)){
-            //审批通过后，撤销，需恢复数据
-            if ("REVOKE".equalsIgnoreCase(biz_action)){
+        //审核结束事件
+        if (CheckType.FINISH.getName().equalsIgnoreCase(type)){
+            //通过
+            if (CheckType.AGREE.getName().equalsIgnoreCase(result)){
+                //审批通过后，撤销，需恢复数据
+                if (CheckType.REVOKE.getName().equalsIgnoreCase(biz_action)){
+                    annualLeaveLog.setCheckType(CheckType.REVOKE);
 
-                annualLeaveLog.setCheckType(CheckType.REVOKE);
-                annualLeaveLogRepository.save(annualLeaveLog);
-
-                annualLeaveFlowLastYear.setPassDays(annualLeaveFlowLastYear.getPassDaysLast());
-                annualLeaveFlowThisYear.setPassDays(annualLeaveFlowThisYear.getPassDaysLast());
-                annualLeaveFlowThisYear.setPassDaysLast(0F);
-                annualLeaveFlowLastYear.setPassDaysLast(0F);
-            }else {
-                //审批通过, 年假天数扣减
-
-                annualLeaveLog.setCheckType(CheckType.AGREE);
-                annualLeaveLogRepository.save(annualLeaveLog);
-
-                //保存这次请假天数，若有撤销则用到
-                annualLeaveFlowLastYear.setPassDaysLast(annualLeaveFlowLastYear.getPassDays());
-                annualLeaveFlowThisYear.setPassDaysLast(annualLeaveFlowThisYear.getPassDays());
-                if (daysLastYear >= durationInDay){
-                    annualLeaveFlowLastYear.setPassDays(annualLeaveFlowLastYear.getPassDays()+durationInDay);
+                    annualLeaveFlowLastYear.setPassDays(annualLeaveFlowLastYear.getPassDaysLast());
+                    annualLeaveFlowThisYear.setPassDays(annualLeaveFlowThisYear.getPassDaysLast());
+                    annualLeaveFlowThisYear.setPassDaysLast(0F);
+                    annualLeaveFlowLastYear.setPassDaysLast(0F);
                 }else {
-                    annualLeaveFlowLastYear.setPassDays(annualLeaveFlowLastYear.getTotalDays());
-                    annualLeaveFlowThisYear.setPassDays(annualLeaveFlowThisYear.getPassDays() + durationInDay - daysLastYear);
+                    annualLeaveLog.setCheckType(CheckType.AGREE);
+
+                    //保存这次请假天数，若有撤销则用到
+                    annualLeaveFlowLastYear.setPassDaysLast(annualLeaveFlowLastYear.getPassDays());
+                    annualLeaveFlowThisYear.setPassDaysLast(annualLeaveFlowThisYear.getPassDays());
+                    //审批通过, 年假天数扣减
+                    if (daysLastYear >= durationInDay){
+                        annualLeaveFlowLastYear.setPassDays(annualLeaveFlowLastYear.getPassDays()+durationInDay);
+                    }else {
+                        annualLeaveFlowLastYear.setPassDays(annualLeaveFlowLastYear.getTotalDays());
+                        annualLeaveFlowThisYear.setPassDays(annualLeaveFlowThisYear.getPassDays() + durationInDay - daysLastYear);
+                    }
                 }
             }
+            //拒绝
+            if (CheckType.REFUSE.getName().equalsIgnoreCase(result)){
+                annualLeaveLog.setCheckType(CheckType.REFUSE);
+            }
+            annualLeaveLogRepository.save(annualLeaveLog);
             annualLeaveFlowRepository.save(annualLeaveFlowThisYear);
             annualLeaveFlowRepository.save(annualLeaveFlowLastYear);
         }
-
-        //审核结束事件，拒绝
-        if ("finish".equals(type) && "refuse".equals(result)){
-            annualLeaveLog.setCheckType(CheckType.REFUSE);
-            annualLeaveLogRepository.save(annualLeaveLog);
-        }
     }
 
-    public void sendMessage(String userId,String content,String url) {
+    public void sendMessage(String userId,String content,String url) throws ApiException {
         DingTalkClient client = new DefaultDingTalkClient(URLConstant.SEND_MESSAGE);
         OapiMessageCorpconversationAsyncsendV2Request request = new OapiMessageCorpconversationAsyncsendV2Request();
         request.setUseridList(userId);
@@ -429,21 +406,6 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         request.setToAllUser(false);
 
         OapiMessageCorpconversationAsyncsendV2Request.Msg msg = new OapiMessageCorpconversationAsyncsendV2Request.Msg();
-        /*msg.setMsgtype("text");
-        msg.setText(new OapiMessageCorpconversationAsyncsendV2Request.Text());
-        msg.getText().setContent(content);
-        request.setMsg(msg);
-*/
-        /*msg.setMsgtype("image");
-        msg.setImage(new OapiMessageCorpconversationAsyncsendV2Request.Image());
-        msg.getImage().setMediaId("@lADOdvRYes0CbM0CbA");
-        request.setMsg(msg);
-
-        msg.setMsgtype("file");
-        msg.setFile(new OapiMessageCorpconversationAsyncsendV2Request.File());
-        msg.getFile().setMediaId("@lADOdvRYes0CbM0CbA");
-        request.setMsg(msg);*/
-
         msg.setMsgtype("link");
         msg.setLink(new OapiMessageCorpconversationAsyncsendV2Request.Link());
         msg.getLink().setTitle("年假审批");
@@ -452,38 +414,10 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         msg.getLink().setPicUrl(url);
         request.setMsg(msg);
 
-        /*msg.setMsgtype("markdown");
-        msg.setMarkdown(new OapiMessageCorpconversationAsyncsendV2Request.Markdown());
-        msg.getMarkdown().setText("##### text");
-        msg.getMarkdown().setTitle("### Title");
-        request.setMsg(msg);
-
-        msg.setOa(new OapiMessageCorpconversationAsyncsendV2Request.OA());
-        msg.getOa().setHead(new OapiMessageCorpconversationAsyncsendV2Request.Head());
-        msg.getOa().getHead().setText("head");
-        msg.getOa().setBody(new OapiMessageCorpconversationAsyncsendV2Request.Body());
-        msg.getOa().getBody().setContent("xxx");
-        msg.setMsgtype("oa");
-        request.setMsg(msg);
-
-        msg.setActionCard(new OapiMessageCorpconversationAsyncsendV2Request.ActionCard());
-        msg.getActionCard().setTitle("xxx123411111");
-        msg.getActionCard().setMarkdown("### 测试123111");
-        msg.getActionCard().setSingleTitle("测试测试");
-        msg.getActionCard().setSingleUrl("https://www.baidu.com");
-        msg.setMsgtype("action_card");
-        request.setMsg(msg);*/
-
-        OapiMessageCorpconversationAsyncsendV2Response response = null;
-        try {
-           response = client.execute(request,accessTokenUtil.getToken());
-        } catch (ApiException e) {
-            e.printStackTrace();
-        }
-        if (response.getErrcode() != ResponseCode.SUCCESS){
+        OapiMessageCorpconversationAsyncsendV2Response response = client.execute(request,accessTokenUtil.getToken());
+        if (response.getErrcode() != ResponseCode.SUCCESS) {
             throw new ServiceException(response.getMsg());
         }
-        logger.info("response-msg:"+response.getBody());
     }
 
     @Override
@@ -570,16 +504,13 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
             view.setLastName(lastName);
         }
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
-        calendar.set(Calendar.MONTH, 0);
-        calendar.set(Calendar.DATE, 1);
-        AnnualLeaveFlow annualLeaveFlowThisYear = annualLeaveFlowRepository.findByUserIdAndYear(userId,calendar.getTime());
+        Date thisYear = DateUtil.getThisYearFirstDay();
+        AnnualLeaveFlow annualLeaveFlowThisYear = annualLeaveFlowRepository.findByUserIdAndYear(userId,thisYear);
         float daysThisYear = annualLeaveFlowThisYear.getTotalDays() - annualLeaveFlowThisYear.getPassDays() > 0f ? annualLeaveFlowThisYear.getTotalDays() - annualLeaveFlowThisYear.getPassDays() : 0f;
         view.setDays(daysThisYear);
 
-        calendar.add(Calendar.YEAR,-1);
-        AnnualLeaveFlow annualLeaveFlowLastYear = annualLeaveFlowRepository.findByUserIdAndYear(userId,calendar.getTime());
+        Date lastYear = DateUtil.getLastYearFirstDay();
+        AnnualLeaveFlow annualLeaveFlowLastYear = annualLeaveFlowRepository.findByUserIdAndYear(userId,lastYear);
         float daysLastYear = annualLeaveFlowLastYear.getTotalDays() - annualLeaveFlowLastYear.getPassDays() > 0f ? annualLeaveFlowLastYear.getTotalDays() - annualLeaveFlowLastYear.getPassDays() : 0f;
         view.setDaysLastYear(daysLastYear);
 
