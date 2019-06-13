@@ -17,7 +17,7 @@ import com.ipayroll.dingtalk.repository.AnnualLeaveFlowRepository;
 import com.ipayroll.dingtalk.repository.AnnualLeaveRepository;
 import com.ipayroll.dingtalk.service.annual.AnnualLeaveService;
 import com.ipayroll.dingtalk.service.annual.AccessTokenUtil;
-import com.ipayroll.dingtalk.util.DateUtil;
+import com.ipayroll.dingtalk.util.DateUtils;
 import com.taobao.api.ApiException;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -87,7 +87,7 @@ public class AnnalLeaveJob {
                 Date nowDate = new Date();
                 //已转正
                 if (regularDate.before(nowDate)){
-                    totalDays = DateUtil.calculationAnnualLeave(joinWorkingTime,sdf.format(nowDate));
+                    totalDays = DateUtils.calculationAnnualLeave(joinWorkingTime,sdf.format(nowDate));
                 }
             } catch (ParseException e) {
                 e.printStackTrace();
@@ -111,7 +111,7 @@ public class AnnalLeaveJob {
             annualLeaveRepository.save(annualLeave);
 
             //维护今年年假数据
-            Date thisYear = DateUtil.getThisYearFirstDay();
+            Date thisYear = DateUtils.getThisYearFirstDay();
             AnnualLeaveFlow annualLeaveFlow = annualLeaveFlowRepository.findByUserIdAndYear(userId,thisYear);
             if (annualLeaveFlow == null){
                 annualLeaveFlow = new AnnualLeaveFlow();
@@ -124,7 +124,7 @@ public class AnnalLeaveJob {
             annualLeaveFlowRepository.save(annualLeaveFlow);
 
             //维护去年数据，已存在数据不可更改
-            Date lastYear = DateUtil.getLastYearFirstDay();
+            Date lastYear = DateUtils.getLastYearFirstDay();
             AnnualLeaveFlow annualLeaveFlowLast = annualLeaveFlowRepository.findByUserIdAndYear(userId,lastYear);
             if (annualLeaveFlowLast == null){
                 annualLeaveFlowLast = new AnnualLeaveFlow();
@@ -228,14 +228,14 @@ public class AnnalLeaveJob {
                 Date nowDate = new Date();
                 //已转正
                 if (regularDate.before(nowDate)){
-                    totalDays = DateUtil.calculationAnnualLeave(joinWorkingTime,sdf.format(nowDate));
+                    totalDays = DateUtils.calculationAnnualLeave(joinWorkingTime,sdf.format(nowDate));
                 }
             } catch (ParseException e) {
                 e.printStackTrace();
             }
 
             //新增一条今年年假数据
-            Date thisYear = DateUtil.getThisYearFirstDay();
+            Date thisYear = DateUtils.getThisYearFirstDay();
             AnnualLeaveFlow annualLeaveFlow = annualLeaveFlowRepository.findByUserIdAndYear(userId,thisYear);
             if (annualLeaveFlow == null){
                 annualLeaveFlow = new AnnualLeaveFlow();
@@ -247,7 +247,7 @@ public class AnnalLeaveJob {
             }
 
             //删除前年数据
-            Date beforeYear = DateUtil.getBeforeYearFirstDay();
+            Date beforeYear = DateUtils.getBeforeYearFirstDay();
             AnnualLeaveFlow annualLeaveFlowBefore = annualLeaveFlowRepository.findByUserIdAndYear(userId,beforeYear);
             if (annualLeaveFlowBefore != null){
                 annualLeaveFlowRepository.delete(annualLeaveFlowBefore);

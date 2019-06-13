@@ -30,8 +30,6 @@ import com.ipayroll.dingtalk.util.*;
 import com.ipayroll.dingtalk.view.AnnualLeaveView;
 import com.ipayroll.dingtalk.view.UserViewItem;
 import com.taobao.api.ApiException;
-import com.taobao.api.BaseTaobaoRequest;
-import com.taobao.api.TaobaoResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -311,7 +309,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         String checkIds = (String)mapResult.get("checkId");
         String biz_action = (String)mapResult.get("biz_action");
 
-        Date thisYear = DateUtil.getThisYearFirstDay();
+        Date thisYear = DateUtils.getThisYearFirstDay();
         AnnualLeaveFlow annualLeaveFlowThisYear = annualLeaveFlowRepository.findByUserIdAndYear(staffId,thisYear);
         if (annualLeaveFlowThisYear == null){
             throw new ServiceException("员工id: "+staffId+" 今年数据不存在导致请年假失败，检查数据！");
@@ -319,7 +317,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         //今年剩余年假
         float daysThisYear = annualLeaveFlowThisYear.getTotalDays() - annualLeaveFlowThisYear.getPassDays() > 0f ? annualLeaveFlowThisYear.getTotalDays() - annualLeaveFlowThisYear.getPassDays() : 0f;
 
-        Date lastYear = DateUtil.getLastYearFirstDay();
+        Date lastYear = DateUtils.getLastYearFirstDay();
         AnnualLeaveFlow annualLeaveFlowLastYear = annualLeaveFlowRepository.findByUserIdAndYear(staffId,lastYear);
         if (annualLeaveFlowLastYear == null){
             throw new ServiceException("员工id: "+staffId+" 去年数据不存在导致请年假失败，检查数据！");
@@ -504,12 +502,12 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
             view.setLastName(lastName);
         }
 
-        Date thisYear = DateUtil.getThisYearFirstDay();
+        Date thisYear = DateUtils.getThisYearFirstDay();
         AnnualLeaveFlow annualLeaveFlowThisYear = annualLeaveFlowRepository.findByUserIdAndYear(userId,thisYear);
         float daysThisYear = annualLeaveFlowThisYear.getTotalDays() - annualLeaveFlowThisYear.getPassDays() > 0f ? annualLeaveFlowThisYear.getTotalDays() - annualLeaveFlowThisYear.getPassDays() : 0f;
         view.setDays(daysThisYear);
 
-        Date lastYear = DateUtil.getLastYearFirstDay();
+        Date lastYear = DateUtils.getLastYearFirstDay();
         AnnualLeaveFlow annualLeaveFlowLastYear = annualLeaveFlowRepository.findByUserIdAndYear(userId,lastYear);
         float daysLastYear = annualLeaveFlowLastYear.getTotalDays() - annualLeaveFlowLastYear.getPassDays() > 0f ? annualLeaveFlowLastYear.getTotalDays() - annualLeaveFlowLastYear.getPassDays() : 0f;
         view.setDaysLastYear(daysLastYear);

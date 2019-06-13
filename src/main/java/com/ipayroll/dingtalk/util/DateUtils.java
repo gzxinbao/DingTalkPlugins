@@ -10,7 +10,7 @@ import java.util.Date;
  * @author: lujiakang
  * @date: 2019/5/23
  */
-public class DateUtil {
+public class DateUtils {
 
     private static  SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
