@@ -305,6 +305,12 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         Float durationInDay = (Float) mapResult.get("durationInDay");
         String checkIds = (String)mapResult.get("checkId");
         String biz_action = (String)mapResult.get("biz_action");
+        String tag = (String)mapResult.get("tag");
+
+        //非年假审批事件，跳过
+        if (!tag.contains("年假")){
+            return;
+        }
 
         Date thisYear = DateUtils.getThisYearFirstDay();
         AnnualLeaveFlow annualLeaveFlowThisYear = annualLeaveFlowRepository.findByUserIdAndYear(staffId,thisYear);
