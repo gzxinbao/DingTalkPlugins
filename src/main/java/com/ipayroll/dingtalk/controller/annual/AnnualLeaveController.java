@@ -10,6 +10,7 @@ import com.taobao.api.ApiException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 
@@ -166,7 +167,7 @@ public class AnnualLeaveController extends BaseController {
 
     @RequestMapping(value = "/synDataJob", method = RequestMethod.GET)
     @ResponseBody
-    public String synDataJob() {
+    public String synDataJob() throws ParseException {
         annalLeaveJob.synDataJob();
         return responseCallback("同步完成");
     }

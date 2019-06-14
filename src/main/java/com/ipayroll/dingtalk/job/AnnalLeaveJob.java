@@ -59,8 +59,7 @@ public class AnnalLeaveJob {
      * 每天凌晨3点同步钉钉用户数据
      */
     @Scheduled(cron = SYS_TIME)
-    @Transactional(rollbackFor = RuntimeException.class)
-    public void synDataJob(){
+    public void synDataJob() throws ParseException {
         List<String> userIdList = annualLeaveService.getAllUserIdList();
         for (String userId : userIdList){
             Map<String, String> smartMap = getSmartWorkHrmEmployee(userId);
@@ -82,15 +81,11 @@ public class AnnalLeaveJob {
             }
 
             float totalDays = 0F;
-            try {
-                Date regularDate = sdf.parse(regularTime);
-                Date nowDate = new Date();
-                //已转正
-                if (regularDate.before(nowDate)){
-                    totalDays = DateUtils.calculationAnnualLeave(joinWorkingTime,sdf.format(nowDate));
-                }
-            } catch (ParseException e) {
-                e.printStackTrace();
+            Date regularDate = sdf.parse(regularTime);
+            Date nowDate = new Date();
+            //已转正
+            if (regularDate.before(nowDate)){
+                totalDays = DateUtils.calculationAnnualLeave(sdf.format(regularDate),joinWorkingTime,sdf.format(nowDate));
             }
 
             //基本数据维护，空为新员工
@@ -100,12 +95,9 @@ public class AnnalLeaveJob {
             }
             annualLeave.setUserId(userId);
             annualLeave.setUserName(userName);
-            try {
-                annualLeave.setConfirmJoinTime(sdf.parse(confirmJoinTime));
-                annualLeave.setJoinWorkingTime(sdf.parse(joinWorkingTime));
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
+            annualLeave.setConfirmJoinTime(sdf.parse(confirmJoinTime));
+            annualLeave.setJoinWorkingTime(sdf.parse(joinWorkingTime));
+            annualLeave.setRegularTime(sdf.parse(regularTime));
             OapiUserGetResponse response = annualLeaveService.getDingDingUser(userId);
             annualLeave.setIsAdmin(response.getIsAdmin());
             annualLeaveRepository.save(annualLeave);
@@ -135,6 +127,7 @@ public class AnnalLeaveJob {
                 annualLeaveFlowLast.setPassDaysLast(0F);
                 annualLeaveFlowRepository.save(annualLeaveFlowLast);
             }
+            logger.info(userName+"同步数据成功！");
         }
     }
 
@@ -228,7 +221,7 @@ public class AnnalLeaveJob {
                 Date nowDate = new Date();
                 //已转正
                 if (regularDate.before(nowDate)){
-                    totalDays = DateUtils.calculationAnnualLeave(joinWorkingTime,sdf.format(nowDate));
+                    totalDays = DateUtils.calculationAnnualLeave(regularTime,joinWorkingTime,sdf.format(nowDate));
                 }
             } catch (ParseException e) {
                 e.printStackTrace();

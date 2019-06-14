@@ -43,6 +43,12 @@ public class AnnualLeave extends BaseEntity {
     private Date confirmJoinTime;
 
     /**
+     * 转正时间
+     */
+    @Temporal(TemporalType.DATE)
+    private Date regularTime;
+
+    /**
      * 首次参加工作时间
      */
     @Temporal(TemporalType.DATE)

@@ -46,7 +46,7 @@ public class DingTalkApplicationTests {
     }
 
     @Test
-    public void synDataJob(){
+    public void synDataJob() throws ParseException {
         annalLeaveJob.synDataJob();
     }
 
