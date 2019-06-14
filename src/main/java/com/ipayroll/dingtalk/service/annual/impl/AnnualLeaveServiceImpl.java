@@ -94,10 +94,7 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         request.setCallBackTag(callbackTagList);
         OapiCallBackRegisterCallBackResponse response = client.execute(request,accessToken);
         //回调地址已经存在
-        if (response.getErrcode() == ResponseCode.BACK_EXIT){
-            //更新回调
-            updateCallBack();
-        } else if (response.getErrcode() != ResponseCode.SUCCESS){
+        if (response.getErrcode() != ResponseCode.SUCCESS){
             throw new ServiceException(response.getMsg());
         }
     }

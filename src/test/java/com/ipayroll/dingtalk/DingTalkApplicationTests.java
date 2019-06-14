@@ -25,7 +25,7 @@ import java.util.Date;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class DingtalkApplicationTests {
+public class DingTalkApplicationTests {
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
