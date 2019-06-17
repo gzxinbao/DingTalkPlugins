@@ -61,6 +61,7 @@ public class AnnalLeaveJob {
     @Scheduled(cron = SYS_TIME)
     public void synDataJob() throws ParseException {
         List<String> userIdList = annualLeaveService.getAllUserIdList();
+        logger.info("=================== 同步数据开始 ====================");
         for (String userId : userIdList){
             Map<String, String> smartMap = getSmartWorkHrmEmployee(userId);
             String userName = smartMap.get("userName");
@@ -129,6 +130,7 @@ public class AnnalLeaveJob {
             }
             logger.info(userName+"同步数据成功！");
         }
+        logger.info("=================== 同步数据结束 ====================");
     }
 
 
