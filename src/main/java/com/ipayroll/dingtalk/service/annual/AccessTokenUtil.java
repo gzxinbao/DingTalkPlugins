@@ -25,21 +25,22 @@ public class AccessTokenUtil {
     @Resource
     private AppConfig  appConfig;
 
-    public String getToken() throws RuntimeException {
+    public String getToken() {
+        DefaultDingTalkClient client = new DefaultDingTalkClient(URL_GET_TOKKEN);
+        OapiGettokenRequest request = new OapiGettokenRequest();
+
+        request.setAppkey(appConfig.getKey());
+        request.setAppsecret(appConfig.getSecret());
+        request.setHttpMethod("GET");
+        OapiGettokenResponse response = null;
         try {
-            DefaultDingTalkClient client = new DefaultDingTalkClient(URL_GET_TOKKEN);
-            OapiGettokenRequest request = new OapiGettokenRequest();
-
-            request.setAppkey(appConfig.getKey());
-            request.setAppsecret(appConfig.getSecret());
-            request.setHttpMethod("GET");
-            OapiGettokenResponse response = client.execute(request);
-            String accessToken = response.getAccessToken();
-            return accessToken;
+            response = client.execute(request);
         } catch (ApiException e) {
-            bizLogger.error("getAccessToken failed", e);
-            throw new RuntimeException();
+            bizLogger.error("get token error",e);
         }
-
+        if (response != null){
+            return response.getAccessToken();
+        }
+        return null;
     }
 }

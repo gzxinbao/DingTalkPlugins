@@ -86,7 +86,7 @@ public class AnnalLeaveJob {
             Date nowDate = new Date();
             //已转正
             if (regularDate.before(nowDate)){
-                totalDays = DateUtils.calculationAnnualLeave(sdf.format(regularDate),joinWorkingTime,sdf.format(nowDate));
+                totalDays = DateUtils.calculationAnnualLeave(confirmJoinTime,joinWorkingTime);
             }
 
             //基本数据维护，空为新员工
@@ -217,13 +217,14 @@ public class AnnalLeaveJob {
             Map<String, String> smartMap = getSmartWorkHrmEmployee(userId);
             String joinWorkingTime = smartMap.get("joinWorkingTime");
             String regularTime = smartMap.get("regularTime");
+            String confirmJoinTime = smartMap.get("confirmJoinTime");
             float totalDays = 0F;
             try {
                 Date regularDate = sdf.parse(regularTime);
                 Date nowDate = new Date();
                 //已转正
                 if (regularDate.before(nowDate)){
-                    totalDays = DateUtils.calculationAnnualLeave(regularTime,joinWorkingTime,sdf.format(nowDate));
+                    totalDays = DateUtils.calculationAnnualLeave(confirmJoinTime,joinWorkingTime);
                 }
             } catch (ParseException e) {
                 e.printStackTrace();
