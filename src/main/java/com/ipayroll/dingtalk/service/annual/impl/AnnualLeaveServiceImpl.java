@@ -155,24 +155,21 @@ public class AnnualLeaveServiceImpl implements AnnualLeaveService {
         JSONObject body = JSON.parseObject(response.getBody());
         JSONObject processInstance = body.getJSONObject("process_instance");
         JSONArray formComponentValues = processInstance.getJSONArray("form_component_values");
-        JSONObject extValue = null;
         Float durationInDay = 0F;
         String tag = "";
         for (int i=0; i<formComponentValues.size(); i++){
             JSONObject pojo = (JSONObject)formComponentValues.get(i);
-            Object object = pojo.get("ext_value");
-            if (object != null){
-                extValue = JSONObject.parseObject(object.toString());
+            String id = pojo.getString("id");
+            if ("DDHolidayField-JKDPOJN2".equalsIgnoreCase(id)){
+                JSONObject extValue = pojo.getJSONObject("ext_value");
+                //Object objectExtension = extValue.get("extension");
+                JSONObject extension = extValue.getJSONObject("extension");
+                tag = extension.getString("tag");
+                //年假事件的unit为DAY
+                if (tag.contains("年假")){
+                    durationInDay =  Float.parseFloat(extValue.get("durationInDay").toString());
+                }
                 break;
-            }
-        }
-        if (extValue != null){
-            Object object = extValue.get("extension");
-            JSONObject extension = JSONObject.parseObject(object.toString());
-            tag = extension.get("tag").toString();
-            //年假事件的unit为DAY
-            if (tag.contains("年假")){
-                durationInDay =  Float.parseFloat(extValue.get("durationInDay").toString());
             }
         }
 
