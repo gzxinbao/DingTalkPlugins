@@ -2,16 +2,17 @@
 
 #### 简介
 
-钉钉年假插件是专门给企业内部使用的一款基于钉钉接口数据的插件，
+钉钉年假插件是专门给企业内部使用的一款基于钉钉接口数据的插件，  
 它能让企业自行设置计算年假方式，达到根据企业的年假规则给予员工年假天数，仅限企业内部使用。
 
 #### 第三方包引用
 
-将lib下的两个jar加入到本地的maven仓库
-参考命令：
-mvn install:install-file -Dfile=D:\IdeaProjects\dingtalk\lib\lippi-oapi-encrpt.jar -DgroupId=com.laiwang.lippi -DartifactId=lippi.oapi.encryt -Dversion=1.0.4 -Dpackaging=jar
-mvn install:install-file -Dfile=D:\IdeaProjects\dingtalk\lib\taobao-sdk-java-auto.jar -DgroupId=com.taobao.sdk -DartifactId=taobao.sdk.java.auto -Dversion=1.0 -Dpackaging=jar
-在项目的pom.xml的dependencies中加入以下内容:
+将lib下的两个jar加入到本地的maven仓库  
+参考命令：  
+mvn install:install-file -Dfile=D:\IdeaProjects\dingtalk\lib\lippi-oapi-encrpt.jar -DgroupId=com.laiwang.lippi -DartifactId=lippi.oapi.encryt -Dversion=1.0.4 -Dpackaging=jar  
+mvn install:install-file -Dfile=D:\IdeaProjects\dingtalk\lib\taobao-sdk-java-auto.jar -DgroupId=com.taobao.sdk -DartifactId=taobao.sdk.java.auto -Dversion=1.0 -Dpackaging=jar  
+在项目的pom.xml的dependencies中加入以下内容:  
+```
 <dependency>
     <groupId>com.laiwang.lippi</groupId>
     <artifactId>lippi.oapi.encryt</artifactId>
@@ -22,33 +23,33 @@ mvn install:install-file -Dfile=D:\IdeaProjects\dingtalk\lib\taobao-sdk-java-aut
     <artifactId>taobao.sdk.java.auto</artifactId>
     <version>1.0</version>
 </dependency>
-
+```
 #### 钉钉开发者平台自建应用
 
-选择企业内部开发 -> 小程序
-应用首页：填写相关信息，服务器公网出口IP名单填公司出口IP，在本地开发时需加入钉钉返回的白名单IP，
-人员设置：设置开发人员
-安全域名设置：加入本地的IP，否则访问不了，上线后加入对外域名
-版本管理：可设置开发板，体验版，线上版本
-接口权限：高级权限-企业通讯录开通通讯录只读权限，高级权限-微应用开通审批，智能人事权限，具体权限根据业务进行开通
-具体可阅读钉钉开发文档
+选择企业内部开发 -> 小程序  
+应用首页：填写相关信息，服务器公网出口IP名单填公司出口IP，在本地开发时需加入钉钉返回的白名单IP  
+人员设置：设置开发人员  
+安全域名设置：加入本地的IP，否则访问不了，上线后加入对外域名 
+版本管理：可设置开发板，体验版，线上版本  
+接口权限：高级权限-企业通讯录开通通讯录只读权限，高级权限-微应用开通审批，智能人事权限，具体权限根据业务进行开通  
+具体可阅读钉钉开发文档  
 
 #### 项目结构
 
 Springboot搭建，maven管理
 
-com.ipayroll.dingtalk.common - 公共包
-com.ipayroll.dingtalk.config - 配置包
-com.ipayroll.dingtalk.controller - controller层
-com.ipayroll.dingtalk.data - 基类包
-com.ipayroll.dingtalk.entity - entity层
-com.ipayroll.dingtalk.enums - 枚举类包
-com.ipayroll.dingtalk.exception - 异常处理层
-com.ipayroll.dingtalk.job - 定时任务层
-com.ipayroll.dingtalk.repository - JPA接口层
-com.ipayroll.dingtalk.service - service层
-com.ipayroll.dingtalk.util - 工具包
-com.ipayroll.dingtalk.view - view层
+com.ipayroll.dingtalk.common - 公共包  
+com.ipayroll.dingtalk.config - 配置包  
+com.ipayroll.dingtalk.controller - controller层  
+com.ipayroll.dingtalk.data - 基类包  
+com.ipayroll.dingtalk.entity - entity层  
+com.ipayroll.dingtalk.enums - 枚举类包  
+com.ipayroll.dingtalk.exception - 异常处理层  
+com.ipayroll.dingtalk.job - 定时任务层  
+com.ipayroll.dingtalk.repository - JPA接口层  
+com.ipayroll.dingtalk.service - service层  
+com.ipayroll.dingtalk.util - 工具包  
+com.ipayroll.dingtalk.view - view层  
 
 #### 主要业务介绍
 
