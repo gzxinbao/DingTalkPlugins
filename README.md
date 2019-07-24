@@ -1,9 +1,11 @@
-# 钉钉年假插件
+# 钉钉年假小程序
 
 #### 简介
 
-钉钉年假插件是专门给企业内部使用的一款基于钉钉接口数据的插件，  
-它能让企业自行设置计算年假方式，达到根据企业的年假规则给予员工年假天数，仅限企业内部使用。
+钉钉年假小程序是薪宝信息科技（广州）有限公司研发给企业使用的一款基于钉钉接口数据的插件，它能让
+企业自行设置计算年假方式，达到根据企业员工的社保缴纳年限规则，非传统的按照员工入职年限给予员工
+年假天数，提供更人性化的企业年假计算方式，（例如：社保缴纳满5年一下，年假5天;满5年以上，10天）。
+秉承着奉献精神，现已将代码开源，仅供参考使用，最终解释权为薪宝科技所有。
 
 #### 第三方包引用
 
@@ -65,13 +67,3 @@ com.ipayroll.dingtalk.view - view层
 2. 新建 Feat_xxx 分支
 3. 提交代码
 4. 新建 Pull Request
-
-
-#### 码云特技
-
-1. 使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2. 码云官方博客 [blog.gitee.com](https://blog.gitee.com)
-3. 你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解码云上的优秀开源项目
-4. [GVP](https://gitee.com/gvp) 全称是码云最有价值开源项目，是码云综合评定出的优秀开源项目
-5. 码云官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6. 码云封面人物是一档用来展示码云会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
